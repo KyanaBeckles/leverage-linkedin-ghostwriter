@@ -33,14 +33,21 @@ DST awareness, and a `job_runs` table stops a job firing twice inside its
 - **Slack**: create a bot with `chat:write` + `reactions:read` scopes, invite it into `#digital-marketing` (channel ID: search Slack for the channel, or `slack_search_channels`).
 - **Anthropic**: an API key for Claude.
 
-### 2. Create the D1 database
+### 2. D1 database
+
+Already created and seeded directly via the Cloudflare API (database
+`leverage-ghostwriter-db`, id in `wrangler.jsonc`) — schema applied from
+`migrations/0000_init.sql`, and `voice_profiles` / `post_topics` loaded from
+`data/voice-profile-v3.json` / `data/post-topics-seed-v3.json`. If you ever
+need to rebuild it from scratch:
 
 ```bash
 npm install
 wrangler d1 create leverage-ghostwriter-db
 # copy the returned database_id into wrangler.jsonc
 npm run db:migrate:remote
-npm run db:seed:remote   # loads voice-profile-v3.json + post-topics-seed-v3.json
+# then re-insert from the two JSON files in data/ — no seed script exists yet,
+# they were loaded via direct D1 API calls this round; write one if redoing.
 ```
 
 ### 3. Set secrets
