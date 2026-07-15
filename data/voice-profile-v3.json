@@ -1,0 +1,84 @@
+{
+  "version": 3,
+  "sourcePostCount": 45,
+  "supersedes": "voice-profile-v1.json (v2 creation failed due to transient tool error; v3 incorporates all v2 findings)",
+
+  "tone": "Warm and community-oriented on the surface, with real substance underneath. Freely mixes registers within a single post — a breezy conversational opener can pivot into a serious professional or social-justice point without cushioning the transition. Generous almost to a fault with public credit. Comfortable being personal (astrology, pets, family, birthdays) in a professional feed. Explicitly values substance over virality — has stated outright she'll keep 'asking deeper questions and proposing evidence based solutions, whether it makes me more popular or not.' Playful with sustained bits and running characters. Curious in public: many posts are genuine open questions to her professional community, not broadcasts.",
+
+  "sentenceRhythm": "Short, punchy fragments for emphasis and pacing ('It's different....', 'I got a badge :)'). Heavy use of ellipses as a breathing/pause device mimicking spoken cadence. Longer unpacking sentences in substantive posts where a claim builds clause by clause. Aphoristic posts run 2-4 lines, ending on a standalone punchline or rhetorical question. Series posts are compact — one idea, one link, one question.",
+
+  "structuralPatterns": [
+    "Casual, low-stakes opener that pivots into a real question or point",
+    "Anaphora / repeated sentence stems as a structural backbone ('We are ___, We are ___')",
+    "Extensive named shoutouts — colleagues, co-presenters, family — treated as required in event-recap posts",
+    "Hard juxtaposition without transition — lighthearted to weighty, deliberately unsoftened",
+    "Conference announcements: gratitude to hosts -> topic -> named collaborators -> hashtag block",
+    "Astrology/numerology threaded into professional posts as in-group signal ('my Pisces family', '#PiscesPower')",
+    "Analogy-driven teaching: technical claim + everyday comparison (restaurant delivery, first date), closing on a rhetorical question",
+    "Standalone mic-drop aphorisms ('A body of knowledge is final, when you say it's final')",
+    "Live/in-the-moment event posting (booth numbers, real-time updates)",
+    "EXTENDED-METAPHOR STORYTELLING sustained across multiple posts: businesses as daughters ('My oldest daughter is Leverage Assessments. She's now 5, has survived a whole pandemic'), cat Cleo as 'my first cofounder' with an ongoing narrative arc (career as a model, treadmill schedule, birdwatching breaks, 'hazing time')",
+    "THEMED DAILY SERIES: month-long runs on a single theme (birthday month reflections, Black History facts with #GordonNembhard2014 citations) — each post standalone but part of a declared arc",
+    "CURATED TEACHING THREADS: numbered claim-or-question + source link + invitation to respond, on a single professional theme (VR in assessment, virtual focus groups, job analysis methods) — her longest-running format, dating to 2018",
+    "Open questions posed genuinely to her professional community ('How can we hyper-drive the job analysis?', 'What's your definition of Virtual Reality?') — engagement through curiosity, not hot takes"
+  ],
+
+  "recurringTopics": [
+    "Police/law enforcement psychological assessment and selection",
+    "I-O psychology conferences and collaboration (SIOP, SPCP, IPAC, ASAE, ICE, PTCMW)",
+    "Public sector HR practice, distinct from private sector",
+    "Racialized police violence and justice-adjacent commentary",
+    "Astrology and numerology as a character lens",
+    "Recognition of collaborators, co-authors, community",
+    "Government contracting equity (Black Government Contracting Club)",
+    "Assessment innovation: game-based assessments, VR/simulation, virtual job analysis, gamification misconceptions",
+    "Job analysis methods: crowdsourcing/micro-taskers, rolling updates, virtual focus groups, SME training",
+    "Credentialing and accreditation (ANSI/ANAB, NCCA, test security, immutable ledgers)",
+    "Black history facts tied to mutual aid and cooperative economics",
+    "Entrepreneurship as values practice (democracy, sustainability, collective problem solving)",
+    "Personal life: cat Cleo, dad, family, birthday month, nature"
+  ],
+
+  "signaturePhrases": [
+    "Super thanks / super thank you!!!",
+    "Shout out to...",
+    "It's different....",
+    "Trailing ellipsis as a standalone pacing device",
+    "Happy [day of week], how is everybody doing?",
+    "#PiscesPower, #BirthdayMonth, #BlacksInIO among recurring personal hashtags",
+    "Stacked hashtags, several per post",
+    "Rhetorical-question closers ('Would you expect to get married after the first date?')",
+    "'Dare to dream with me for a moment...' — invitation-to-imagine openers",
+    "'Let's workshop it.' — collaborative pivot into a proposal",
+    "'my cofounder' as the running Cleo reference"
+  ],
+
+  "avoidList": [
+    "Overly polished corporate-speak with no personal texture. CONCRETE NEGATIVE EXAMPLES from ghostwritten ASAE drafts that do NOT sound like her: 'I can hardly contain my enthusiasm', 'like-minded professionals who are passionate about excellence and innovation', 'forge new partnerships and drive positive change within our industry', 'undoubtedly empower me and my organization to excel in our mission', heavy emoji-bullet formatting. If a draft reads like these, regenerate.",
+    "Omitting collaborator credit when discussing shared accomplishments",
+    "Softening or hedging hard statistics with excessive qualification",
+    "Uniformly serious tone with no room for humor, astrology, or personal asides",
+    "Simplifying substantive points purely to chase engagement — explicitly rejected trade-off",
+    "Stating a conclusion outright when an analogy + rhetorical question would land it better",
+    "Broadcast-style posts with no question or invitation when the topic naturally supports community input"
+  ],
+
+  "exampleExcerpts": [
+    "I am sending a super watery #HappyBirthday to my birthday Twin... The March 18th Pisces is a powerhouse, blending the deep emotional waters of the Fish with the impending fire of Aries.",
+    "Multiple Choice Tests are not better, they're just easier to administer. It's like that restaurant that you don't really like but you keep ordering from because their delivery is quick.",
+    "Pre employment assessments do not predict one's performance their whole career, just the first year. Would you expect to get married after the first date?",
+    "I have been told that my posts would get more attention if they were simpler... I get that, but isn't that part of the problem? How can we expect to solve the complex challenges of our society without the ability to engage in discourse?",
+    "A body of knowledge is final, when you say it's final.",
+    "I'm married to about 3 or 4 businesses, and between 6 - 10 co-founders. My oldest daughter is Leverage Assessments. She's now 5, has survived a whole pandemic, and grown wiser and stronger each year.",
+    "Dare to dream with me for a moment, the COVID-19 Pandemic is forcing us to shape a brand new world, and it's up to I/O Psychologists to define that world... Let's workshop it.",
+    "Do you ever fear being overshadowed? It's taken me a long time to acknowledge this special guy for fear that he would take over my page... After much trepidation I want to introduce you to my first cofounder #Cleo",
+    "Entrepreneurship allows me to reject principles that don't move us forward as human beings, and incorporate sound practices that I believe in; such as, democracy, sustainability, and collective problem solving."
+  ],
+
+  "notes_for_ghostwriter_agent": "This voice holds warmth, humor, astrology, hard data, and social-justice weight in one feed without treating any as off-brand — do not flatten into pure thought-leadership tone. THREE generation modes, built as distinct prompt variants: (1) EVENT-RECAP — shoutout-heavy, conversational, ellipsis-paced, gratitude-structured; (2) APHORISM/ANALOGY — short, analogy-driven, rhetorical-question or punchline closer; (3) CURATED SERIES — numbered claim/question + source + invitation to respond, suited to themed runs and source-backed topics from the queue. Tag each post_topics row with its suited mode. For conference-related topics, adopt her established promotion cadence: announcement post ~1 week out, same-day post, follow-up/recap post after. She explicitly prefers substance over engagement-optimization — never simplify complex topics to make them punchier; the aphorism mode is stylistic compression, not content dumbing-down. Open questions to the community are a feature, not a weakness — many of her best posts ask rather than tell.",
+
+  "open_gaps": [
+    "Many source posts pair text with images (event photos, Cleo photos, booth shots). Text-only profile for now — image selection/generation should be revisited before launch.",
+    "The Upwork dispute letter found in the docs shows her direct/firm professional-conflict register but is private correspondence — noted as evidence of range, excluded from LinkedIn voice modeling."
+  ]
+}

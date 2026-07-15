@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "leverage-linkedin-ghostwriter",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-15",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Fires every 15 minutes, every day. The handler itself checks real
+  // America/New_York time and the job_runs table to decide whether one of
+  // the three jobs (generate/review/publish_gate) is actually due — this
+  // sidesteps Cloudflare cron being UTC-only with no DST awareness.
+  "triggers": {
+    "crons": ["*/15 * * * *"]
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "leverage-ghostwriter-db",
+      "database_id": "REPLACE_AFTER_WRANGLER_D1_CREATE"
+    }
+  ]
+}

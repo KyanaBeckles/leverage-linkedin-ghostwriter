@@ -1,0 +1,300 @@
+{
+  "note": "Topic seed v3. Supersedes post-topics-seed-v2.json. Changes: (1) credentialing/association topics re-weighted upward to serve the credential-owner association target market from the 2026 Strategy Map (CompTIA, FITSI, USPA, NAEC, APWA, EAPA, ASGE, NAIFA etc.); (2) product-forward topics added for LeverageLearning, Nav Net-30, and test administration, governed by a 4:1 substance-to-product ratio rule enforced at the orchestrator level; (3) audience tags added so the orchestrator can balance content across the two primary target markets.",
+  "ratio_rule": "For every 5 posts, at most 1 should be product-forward (audience_tag: product). The other 4+ draw from thought-leadership topics. Never schedule two product-forward posts consecutively.",
+  "topics": [
+    {
+      "topic": "96% of NYPD's $321M in consultant spending over a decade went to white-owned firms — Leverage was the only Black-owned firm to win a prime NYPD contract in 10 years",
+      "source_context": "THE CITY, Greg Smith investigation, July 2020",
+      "mode": "aphorism",
+      "audience_tag": "public_sector",
+      "priority": 10
+    },
+    {
+      "topic": "ISO 17024 job analysis in practice: a counterterrorism credential case study",
+      "source_context": "SPCP 2022 presentation (Zion) — directly relevant to credential-owner associations",
+      "mode": "curated_series",
+      "audience_tag": "associations",
+      "priority": 9
+    },
+    {
+      "topic": "Accreditation is a long journey for any new credential — ANSI/ANAB vs. NCCA, and how credential owners should pace themselves",
+      "source_context": "Drive doc March series + current ANSI/ANAB workforce credential exploration",
+      "mode": "curated_series",
+      "audience_tag": "associations",
+      "priority": 9
+    },
+    {
+      "topic": "Immutable ledgers for test security — more relevant than ever now that certification exams have gone remote",
+      "source_context": "Drive doc: March series",
+      "mode": "aphorism",
+      "audience_tag": "associations",
+      "priority": 8
+    },
+    {
+      "topic": "Remote certification exams during the pandemic: which credential owners kept remote delivery, and what it means for test security",
+      "source_context": "Past LinkedIn post (open question format)",
+      "mode": "curated_series",
+      "audience_tag": "associations",
+      "priority": 8
+    },
+    {
+      "topic": "A body of knowledge is final when you say it's final — the governance decision every credential owner has to make",
+      "source_context": "Past LinkedIn post aphorism, expandable for association audience",
+      "mode": "aphorism",
+      "audience_tag": "associations",
+      "priority": 8
+    },
+    {
+      "topic": "Subject Matter Experts don't always have PhDs — operationally defining 'expert' for your certification program",
+      "source_context": "Past LinkedIn post",
+      "mode": "aphorism",
+      "audience_tag": "associations",
+      "priority": 8
+    },
+    {
+      "topic": "While it is possible to make a test by yourself, don't — why credential integrity depends on SME panels",
+      "source_context": "Past LinkedIn post",
+      "mode": "aphorism",
+      "audience_tag": "associations",
+      "priority": 7
+    },
+    {
+      "topic": "Government contracting as 'a power and politics play' — the 'skin in the game' argument for diverse-owned firms in public sector work",
+      "source_context": "THE CITY, Greg Smith investigation",
+      "mode": "aphorism",
+      "audience_tag": "public_sector",
+      "priority": 9
+    },
+    {
+      "topic": "There's no national database of police misconduct — officers fired for cause in one department can be rehired in another",
+      "source_context": "Reckoning with Racialized Police Violence (2022), I-O Psychology journal",
+      "mode": "aphorism",
+      "audience_tag": "public_sector",
+      "priority": 9
+    },
+    {
+      "topic": "The criterion-centric approach to test validation: start with what the job actually requires, then work backward to what should be measured",
+      "source_context": "I-O Psychology journal article",
+      "mode": "curated_series",
+      "audience_tag": "both",
+      "priority": 9
+    },
+    {
+      "topic": "Why psych validation studies done in Iowa or South Dakota don't generalize to NYC candidates — locality matters in test validity",
+      "source_context": "Department 12 Podcast",
+      "mode": "aphorism",
+      "audience_tag": "public_sector",
+      "priority": 8
+    },
+    {
+      "topic": "The 'triple play' model of police psych screening: written assessment, oral assessment, background check",
+      "source_context": "Department 12 Podcast",
+      "mode": "curated_series",
+      "audience_tag": "public_sector",
+      "priority": 8
+    },
+    {
+      "topic": "The MMPI is the most widely used psych test in law enforcement hiring, yet its predictive validity evidence is 'inconclusive'",
+      "source_context": "I-O Psychology journal article",
+      "mode": "aphorism",
+      "audience_tag": "public_sector",
+      "priority": 8
+    },
+    {
+      "topic": "'Screening out' vs. 'screening in': most agencies only filter out red flags — the harder work is identifying who to actively hire",
+      "source_context": "I-O Psychology journal article",
+      "mode": "aphorism",
+      "audience_tag": "public_sector",
+      "priority": 8
+    },
+    {
+      "topic": "How background checks can adversely exclude qualified minority candidates when they weigh history only tenuously related to job performance",
+      "source_context": "I-O Psychology journal article",
+      "mode": "curated_series",
+      "audience_tag": "public_sector",
+      "priority": 8
+    },
+    {
+      "topic": "Why standard diversity training rarely produces lasting behavior change — and what does work",
+      "source_context": "I-O Psychology journal article",
+      "mode": "curated_series",
+      "audience_tag": "both",
+      "priority": 8
+    },
+    {
+      "topic": "Traditional productivity metrics (arrest counts, tickets) can backfire in policing — the case for de-escalation and community outreach metrics",
+      "source_context": "I-O Psychology journal article",
+      "mode": "aphorism",
+      "audience_tag": "public_sector",
+      "priority": 8
+    },
+    {
+      "topic": "Occupational stress measurably impairs decision-making and is linked to more biased, more aggressive responses under pressure",
+      "source_context": "I-O Psychology journal article",
+      "mode": "curated_series",
+      "audience_tag": "public_sector",
+      "priority": 8
+    },
+    {
+      "topic": "The 'code of silence': 67% of officers believed reporting a fellow officer's misconduct would carry personal repercussions",
+      "source_context": "I-O Psychology journal article",
+      "mode": "aphorism",
+      "audience_tag": "public_sector",
+      "priority": 8
+    },
+    {
+      "topic": "Game-based assessments bring the real world into evaluation — measuring cognitive and behavioral traits MCTs can't reach",
+      "source_context": "SPCP presentation + Drive doc VR/gamification thread",
+      "mode": "curated_series",
+      "audience_tag": "both",
+      "priority": 8
+    },
+    {
+      "topic": "A nuanced take on 'defund the police': agreeing with the concept while flagging the risk of fatigued remaining officers making worse decisions",
+      "source_context": "Department 12 Podcast",
+      "mode": "aphorism",
+      "audience_tag": "public_sector",
+      "priority": 7
+    },
+    {
+      "topic": "Only 1% of U.S. police departments require a 4-year degree, despite evidence linking higher education to reduced use of force",
+      "source_context": "I-O Psychology journal article",
+      "mode": "aphorism",
+      "audience_tag": "public_sector",
+      "priority": 7
+    },
+    {
+      "topic": "How police unions' role in disciplinary reinstatement complicates accountability",
+      "source_context": "I-O Psychology journal article",
+      "mode": "curated_series",
+      "audience_tag": "public_sector",
+      "priority": 7
+    },
+    {
+      "topic": "Why even good reform policies fail without first assessing organizational readiness for change",
+      "source_context": "I-O Psychology journal article",
+      "mode": "aphorism",
+      "audience_tag": "both",
+      "priority": 7
+    },
+    {
+      "topic": "Proprietary assessment tools shield police selection from public scrutiny — the case for transparency",
+      "source_context": "I-O Psychology journal article",
+      "mode": "curated_series",
+      "audience_tag": "public_sector",
+      "priority": 7
+    },
+    {
+      "topic": "Why high-fidelity, behavior-based assessments resist faking better than multiple-choice tests",
+      "source_context": "I-O Psychology journal article",
+      "mode": "aphorism",
+      "audience_tag": "both",
+      "priority": 7
+    },
+    {
+      "topic": "Correcting misconceptions about gamification of assessment — it's more than SJTs and badges",
+      "source_context": "Drive doc: Cambridge gamification paper",
+      "mode": "curated_series",
+      "audience_tag": "both",
+      "priority": 7
+    },
+    {
+      "topic": "VR in selection isn't 'arriving' — it arrived long ago (Navy officers selected via a 37-foot boat piloting simulation)",
+      "source_context": "Drive doc: VR/assessment roundup (SHRM)",
+      "mode": "curated_series",
+      "audience_tag": "both",
+      "priority": 7
+    },
+    {
+      "topic": "Virtual ride-alongs and role plays: realistic job previews no longer require flying candidates across the country",
+      "source_context": "Drive doc: IACP virtual ride-along material",
+      "mode": "curated_series",
+      "audience_tag": "public_sector",
+      "priority": 7
+    },
+    {
+      "topic": "Can job analysis be crowdsourced? Using micro-taskers and social media to collect incumbent knowledge",
+      "source_context": "Drive doc: March series (SIOP21 questions)",
+      "mode": "curated_series",
+      "audience_tag": "both",
+      "priority": 7
+    },
+    {
+      "topic": "Job analysis shouldn't be a stagnant once-every-5-years artifact — the case for rolling updates",
+      "source_context": "Drive doc: March series",
+      "mode": "aphorism",
+      "audience_tag": "both",
+      "priority": 7
+    },
+    {
+      "topic": "Virtual focus groups for job analysis: what we gain, what we lose, how to run them well",
+      "source_context": "Drive doc: virtual focus group roundup",
+      "mode": "curated_series",
+      "audience_tag": "both",
+      "priority": 6
+    },
+    {
+      "topic": "BLKS in IO — connecting Black professionals in industrial-organizational psychology",
+      "source_context": "Department 12 Podcast",
+      "mode": "event_recap",
+      "audience_tag": "both",
+      "priority": 6
+    },
+    {
+      "topic": "Entrepreneurship as values practice: democracy, sustainability, collective problem solving",
+      "source_context": "Drive doc: March 1st birthday-month post",
+      "mode": "event_recap",
+      "audience_tag": "both",
+      "priority": 7
+    },
+    {
+      "topic": "Businesses as daughters: Leverage Assessments as the oldest child who survived a pandemic",
+      "source_context": "Drive doc: March 1st post — anniversary-suitable",
+      "mode": "event_recap",
+      "audience_tag": "both",
+      "priority": 6
+    },
+    {
+      "topic": "Black history facts series: the AME Church was founded by leaders of the country's second African American mutual-aid society",
+      "source_context": "Past post, #GordonNembhard2014 — Black History Month suitable",
+      "mode": "curated_series",
+      "audience_tag": "both",
+      "priority": 6
+    },
+    {
+      "topic": "The Combahee River Colony: African American women who occupied abandoned farmland during the Civil War and cared for one another",
+      "source_context": "Past post, #GordonNembhard2014",
+      "mode": "curated_series",
+      "audience_tag": "both",
+      "priority": 6
+    },
+    {
+      "topic": "PRODUCT: LeverageLearning courses — how self-serve training changes who can afford professional assessment education",
+      "source_context": "Strategy Map 2026: product line. Frame as access/democratization story, not a sales pitch",
+      "mode": "aphorism",
+      "audience_tag": "product",
+      "priority": 7
+    },
+    {
+      "topic": "PRODUCT: Nav Net-30 program — building business credit through vendor tradelines, and why that matters for small/diverse-owned firms",
+      "source_context": "Strategy Map 2026 + leverageassessments.delivery Nav partnership. Frame through the gov-contracting-equity lens she already owns",
+      "mode": "curated_series",
+      "audience_tag": "product",
+      "priority": 7
+    },
+    {
+      "topic": "PRODUCT: Test administration services — what actually goes wrong when agencies run high-stakes exams without professional administration",
+      "source_context": "Strategy Map 2026: product line. Frame as war-stories/lessons, value prop implicit",
+      "mode": "aphorism",
+      "audience_tag": "product",
+      "priority": 6
+    },
+    {
+      "topic": "PRODUCT: A first-generation product story — what building automated self-serve assessment products taught a consulting-first firm",
+      "source_context": "Strategy Map 2026: 'reduce reliance on consulting to 0' strategy. Founder-journey angle, fits her businesses-as-daughters metaphor",
+      "mode": "event_recap",
+      "audience_tag": "product",
+      "priority": 6
+    }
+  ]
+}
