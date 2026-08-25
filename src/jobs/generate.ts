@@ -1,6 +1,10 @@
 import type { Env } from "../env";
 import { generateWithClaude } from "../lib/claude";
 import { easternDateToUtc } from "../lib/easternTime";
+import { postAlert } from "../lib/slack";
+
+const POSTS_PER_WEEK = 3;
+const LINKEDIN_MAX_CHARS = 3000;
 
 interface Topic {
   id: number;
@@ -45,7 +49,7 @@ async function pickTopics(db: D1Database): Promise<Topic[]> {
   let productCount = 0;
 
   for (const t of results) {
-    if (picked.length >= 3) break;
+    if (picked.length >= POSTS_PER_WEEK) break;
     const isProduct = t.audience_tag === "product";
     if (isProduct && productCount >= 1) continue; // at most 1-in-3 this batch (conservative vs. spec's 1-in-5)
     const last = picked[picked.length - 1];
@@ -67,7 +71,7 @@ async function draftPost(env: Env, voice: VoiceProfile, topic: Topic): Promise<{
   const avoidList = voice.avoid_list ? (JSON.parse(voice.avoid_list) as string[]) : [];
   const examples = JSON.parse(voice.example_excerpts) as string[];
   // Rotate a couple of examples so the model doesn't anchor on the same ones every week.
-  const rotatingExamples = examples.sort(() => Math.random() - 0.5).slice(0, 3);
+  const rotatingExamples = pickRandom(examples, 3);
 
   const system = `You are ghostwriting a LinkedIn post in Kyana Beckles' authentic voice for Leverage Assessments Inc.
 
@@ -93,7 +97,25 @@ Output ONLY the post text, no preamble, no markdown formatting, no quotation mar
     maxTokens: 800,
   });
 
-  return { text, tokensUsed: String(tokensUsed), prompt: `${system}\n\n---\n\n${user}` };
+  // Both of these would otherwise surface at the 14:30 publish gate as an
+  // opaque Buffer error (or worse, an empty post going live).
+  if (!text.trim()) throw new Error("Claude returned an empty draft");
+  if (text.length > LINKEDIN_MAX_CHARS) {
+    throw new Error(`Draft is ${text.length} chars, over LinkedIn's ${LINKEDIN_MAX_CHARS}-char limit`);
+  }
+
+  return { text: text.trim(), tokensUsed: String(tokensUsed), prompt: `${system}\n\n---\n\n${user}` };
+}
+
+// Fisher-Yates over a copy: `Array#sort` with a random comparator is both
+// biased and an in-place mutation of the caller's array.
+function pickRandom<T>(items: T[], count: number): T[] {
+  const pool = [...items];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, count);
 }
 
 // Next Mon/Wed/Fri 3:00 PM ET dates, starting from tomorrow (this job runs
@@ -118,34 +140,59 @@ export async function runGenerateJob(env: Env, todayEt: string): Promise<string>
 
   const topics = await pickTopics(env.DB);
   if (topics.length === 0) {
-    return "No unused topics remaining in post_topics — queue needs replenishing (see 'Open items' in orchestrator-strategy-guidance.md).";
+    const detail = "No unused topics remaining in post_topics — queue needs replenishing (see 'Open items' in orchestrator-strategy-guidance.md).";
+    await postAlert(env.SLACK_BOT_TOKEN, env.SLACK_CHANNEL_ID, `⚠️ Ghostwriter: no posts will go out this week. ${detail}`);
+    return detail;
   }
 
   const slots = nextThreeSlots(todayEt);
   const created: number[] = [];
+  const createdSlots: string[] = [];
+  const failures: string[] = [];
 
   for (let i = 0; i < topics.length; i++) {
     const topic = topics[i];
     const slotDate = slots[i];
-    const { text, tokensUsed, prompt } = await draftPost(env, voice, topic);
-    const scheduledAt = easternDateToUtc(slotDate, 15, 0).toISOString();
+    try {
+      const { text, tokensUsed, prompt } = await draftPost(env, voice, topic);
+      const scheduledAt = easternDateToUtc(slotDate, 15, 0).toISOString();
 
-    const insertResult = await env.DB
-      .prepare(
-        "INSERT INTO linkedin_posts (topic_id, voice_profile_id, draft_text, status, scheduled_at) VALUES (?, ?, ?, 'scheduled', ?)"
-      )
-      .bind(topic.id, voice.id, text, scheduledAt)
-      .run();
+      const insertResult = await env.DB
+        .prepare(
+          "INSERT INTO linkedin_posts (topic_id, voice_profile_id, draft_text, status, scheduled_at) VALUES (?, ?, ?, 'scheduled', ?)"
+        )
+        .bind(topic.id, voice.id, text, scheduledAt)
+        .run();
 
-    const postId = insertResult.meta.last_row_id;
-    created.push(Number(postId));
+      const postId = insertResult.meta.last_row_id;
+      created.push(Number(postId));
+      createdSlots.push(slotDate);
 
-    await env.DB.prepare("UPDATE post_topics SET used = 1 WHERE id = ?").bind(topic.id).run();
-    await env.DB
-      .prepare("INSERT INTO post_generation_logs (post_id, prompt_used, model_response, tokens_used) VALUES (?, ?, ?, ?)")
-      .bind(postId, prompt, text, tokensUsed)
-      .run();
+      // Only after the draft exists — a topic burned by a failed draft would be
+      // silently dropped from the queue forever.
+      await env.DB.prepare("UPDATE post_topics SET used = 1 WHERE id = ?").bind(topic.id).run();
+      await env.DB
+        .prepare("INSERT INTO post_generation_logs (post_id, prompt_used, model_response, tokens_used) VALUES (?, ?, ?, ?)")
+        .bind(postId, prompt, text, tokensUsed)
+        .run();
+    } catch (err) {
+      // One bad draft shouldn't cost the other two: the job stays 'ok' so the
+      // retry window doesn't re-draft what already succeeded, and the gap is
+      // reported to Slack instead.
+      failures.push(`${slotDate} (topic ${topic.id}): ${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 
-  return `Generated ${created.length} draft(s) for ${slots.join(", ")}: post ids ${created.join(", ")}`;
+  const shortfall = POSTS_PER_WEEK - created.length;
+  if (shortfall > 0) {
+    const reason = failures.length ? failures.join("; ") : `only ${topics.length} unused topic(s) left in the queue`;
+    await postAlert(
+      env.SLACK_BOT_TOKEN,
+      env.SLACK_CHANNEL_ID,
+      `⚠️ Ghostwriter generated ${created.length}/${POSTS_PER_WEEK} drafts for this week — ${shortfall} slot(s) will be empty. ${reason}`
+    );
+  }
+
+  const summary = `Generated ${created.length} draft(s) for ${createdSlots.join(", ")}: post ids ${created.join(", ")}`;
+  return failures.length ? `${summary}. Failed: ${failures.join("; ")}` : summary;
 }
