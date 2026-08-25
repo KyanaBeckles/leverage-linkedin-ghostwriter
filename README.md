@@ -18,6 +18,17 @@ three jobs — this sidesteps Cloudflare Cron Triggers being UTC-only with no
 DST awareness, and a `job_runs` table stops a job firing twice inside its
 15-minute window.
 
+A job that fails is retried on later cron firings for up to 2 hours after its
+target time; only a run recorded as `ok` blocks further attempts, and a `running`
+row left behind by a Worker that died mid-job is reclaimed after 15 minutes.
+Every job is failure-isolating: one topic that Claude can't draft, or one post
+Slack won't accept, doesn't take the rest of the batch down with it, and
+anything that gets stuck posts an alert into `#digital-marketing`.
+
+The publish gate fails closed: if the veto reaction can't be read from Slack
+(after retries), the post is held in `pending_review` and flagged rather than
+published.
+
 | Job | When (ET) | What |
 |---|---|---|
 | `generate` | Sunday ~18:00 | Picks 3 topics, drafts them in Kyana's voice via Claude, schedules for the coming Mon/Wed/Fri 3:00 PM |
@@ -61,7 +72,11 @@ wrangler secret put BUFFER_CHANNEL_ID
 wrangler secret put CLOUDINARY_CLOUD_NAME
 wrangler secret put CLOUDINARY_API_KEY
 wrangler secret put CLOUDINARY_API_SECRET
+wrangler secret put RUN_SECRET   # bearer token guarding POST /run
 ```
+
+`RUN_SECRET` can be any long random string (`openssl rand -hex 32`). Without it
+set, `POST /run` returns 401 for everyone.
 
 ### 4. Deploy
 
@@ -75,8 +90,28 @@ Cron propagation takes up to 15 minutes globally after first deploy.
 
 `POST /run` on the deployed Worker URL forces an immediate dispatch check
 (same logic the cron uses) — useful to verify secrets/bindings are wired up
-without waiting for a real ET time window. `GET /health` just echoes the
-Worker's current view of Eastern time, useful for confirming DST math.
+without waiting for a real ET time window. It generates and publishes for
+real, so it requires the `RUN_SECRET` bearer token:
+
+```bash
+curl -X POST -H "Authorization: Bearer $RUN_SECRET" https://<worker-url>/run
+```
+
+`GET /health` is unauthenticated and just echoes the Worker's current view of
+Eastern time, useful for confirming DST math.
+
+## Development
+
+```bash
+npm install
+npm run check   # tsc --noEmit
+npm test        # vitest
+```
+
+The tests cover the ET/DST scheduling math, the dispatch + retry state machine,
+`POST /run` auth, and the failure paths of all three jobs against a fake D1
+(`test/helpers/fakeD1.ts`) — no network or Cloudflare account needed. CI runs
+both commands on every PR.
 
 ## Known gaps (v1)
 
