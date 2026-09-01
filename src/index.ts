@@ -105,9 +105,18 @@ export default {
       const log = await dispatch(env, new Date());
       return Response.json({ ok: true, ran: log });
     }
+    // Unconditional publish-gate run, bypassing the ET-window/job_runs guard
+    // that /run has — for manually retrying a specific day's posts on demand
+    // (e.g. after fixing a credential that caused a real publish failure).
+    // Safe to re-call: only acts on rows still in 'pending_review'.
+    if (url.pathname === "/run-publish-gate" && req.method === "POST") {
+      const dateStr = url.searchParams.get("date") ?? getEasternParts().dateStr;
+      const detail = await runPublishGateJob(env, dateStr);
+      return Response.json({ ok: true, dateStr, detail });
+    }
     if (url.pathname === "/health") {
       return Response.json({ ok: true, et: getEasternParts() } satisfies HealthResponse);
     }
-    return new Response("leverage-linkedin-ghostwriter — see /health or POST /run", { status: 200 });
+    return new Response("leverage-linkedin-ghostwriter — see /health, POST /run, or POST /run-publish-gate?date=YYYY-MM-DD", { status: 200 });
   },
 };
