@@ -23,6 +23,7 @@ const PENDING_POST = {
   image_url: null,
   scheduled_at: "2026-07-13T19:00:00.000Z",
   slack_message_ts: "1700000000.000100",
+  facebook_status: null,
 };
 
 function envWith(pending: Record<string, unknown>[], stranded: Record<string, unknown>[] = []): { env: Env; fake: ReturnType<typeof createFakeD1> } {
@@ -32,7 +33,17 @@ function envWith(pending: Record<string, unknown>[], stranded: Record<string, un
     { match: /UPDATE linkedin_posts/ },
   ];
   const fake = createFakeD1(routes);
-  return { env: { DB: fake.db, SLACK_BOT_TOKEN: "t", SLACK_CHANNEL_ID: "C1", BUFFER_API_KEY: "b", BUFFER_CHANNEL_ID: "ch" } as unknown as Env, fake };
+  return {
+    env: {
+      DB: fake.db,
+      SLACK_BOT_TOKEN: "t",
+      SLACK_CHANNEL_ID: "C1",
+      BUFFER_API_KEY: "b",
+      BUFFER_CHANNEL_ID: "ch",
+      BUFFER_FACEBOOK_CHANNEL_ID: "fb-ch",
+    } as unknown as Env,
+    fake,
+  };
 }
 
 beforeEach(() => {
@@ -115,5 +126,41 @@ describe("runPublishGateJob", () => {
     await runPublishGateJob(env, "2026-07-13");
 
     expect(bufferMock.mock.calls[0][0].text).toBe("Kyana's rewrite");
+  });
+
+  it("cross-posts the same approved text to Facebook using its own channel", async () => {
+    const { env, fake } = envWith([PENDING_POST]);
+
+    const detail = await runPublishGateJob(env, "2026-07-13");
+
+    expect(bufferMock).toHaveBeenCalledTimes(2);
+    expect(bufferMock.mock.calls[1][0]).toMatchObject({ channelId: "fb-ch", text: "the draft" });
+    expect(fake.matching(/facebook_status = 'posted'/)[0].params).toEqual(["buffer-post-1", 42]);
+    expect(detail).toContain("Facebook: posted 1, failed 0");
+  });
+
+  it("marks a Facebook failure independently, without blocking the LinkedIn post", async () => {
+    bufferMock.mockImplementation(async (args) => {
+      if (args.channelId === "fb-ch") throw new Error("facebook channel disconnected");
+      return "buffer-post-1";
+    });
+    const { env, fake } = envWith([PENDING_POST]);
+
+    const detail = await runPublishGateJob(env, "2026-07-13");
+
+    expect(fake.matching(/status = 'posted'/)[0].params).toEqual(["buffer-post-1", 42]);
+    expect(fake.matching(/facebook_status = 'failed'/)[0].params).toEqual(["facebook channel disconnected", 42]);
+    expect(postAlertMock.mock.calls[0][2]).toContain("failed to cross-post to Facebook");
+    expect(detail).toContain("posted 1");
+    expect(detail).toContain("Facebook: posted 0, failed 1");
+  });
+
+  it("skips a post already cross-posted to Facebook, on a manual retry", async () => {
+    const { env, fake } = envWith([{ ...PENDING_POST, facebook_status: "posted" }]);
+
+    await runPublishGateJob(env, "2026-07-13");
+
+    expect(bufferMock).toHaveBeenCalledTimes(1); // LinkedIn only
+    expect(fake.matching(/UPDATE linkedin_posts SET facebook_status/)).toHaveLength(0);
   });
 });
