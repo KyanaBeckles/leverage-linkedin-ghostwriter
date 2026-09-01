@@ -7,6 +7,7 @@ export interface Env {
   SLACK_CHANNEL_ID: string; // #digital-marketing channel ID
   BUFFER_API_KEY: string;
   BUFFER_CHANNEL_ID: string; // LinkedIn personal-profile channel in Buffer
+  BUFFER_FACEBOOK_CHANNEL_ID: string; // "Leverage Assessments, Inc." Facebook Page channel in Buffer
   CLOUDINARY_CLOUD_NAME: string;
   CLOUDINARY_API_KEY: string;
   CLOUDINARY_API_SECRET: string;

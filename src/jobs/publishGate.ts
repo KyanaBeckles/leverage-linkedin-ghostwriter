@@ -9,6 +9,7 @@ interface PendingPost {
   image_url: string | null;
   scheduled_at: string;
   slack_message_ts: string;
+  facebook_status: string | null;
 }
 
 // Buffer rejects a customScheduled post whose dueAt has already passed, which
@@ -20,7 +21,7 @@ const MIN_LEAD_MS = 5 * 60_000;
 // pulled, everything else goes to Buffer for the 3:00 PM publish.
 export async function runPublishGateJob(env: Env, todayEt: string): Promise<string> {
   const { results } = await env.DB
-    .prepare("SELECT id, draft_text, edited_text, image_url, scheduled_at, slack_message_ts FROM linkedin_posts WHERE status = 'pending_review' AND date(scheduled_at) = ?")
+    .prepare("SELECT id, draft_text, edited_text, image_url, scheduled_at, slack_message_ts, facebook_status FROM linkedin_posts WHERE status = 'pending_review' AND date(scheduled_at) = ?")
     .bind(todayEt)
     .all<PendingPost>();
 
@@ -28,7 +29,7 @@ export async function runPublishGateJob(env: Env, todayEt: string): Promise<stri
 
   if (results.length === 0) return `No pending_review posts for ${todayEt}.${stranded}`;
 
-  let pulled = 0, posted = 0, failed = 0, held = 0;
+  let pulled = 0, posted = 0, failed = 0, held = 0, fbPosted = 0, fbFailed = 0;
 
   for (const post of results) {
     let vetoed: boolean;
@@ -55,10 +56,11 @@ export async function runPublishGateJob(env: Env, todayEt: string): Promise<stri
       continue;
     }
 
+    const text = post.edited_text ?? post.draft_text;
+    const scheduledAt = new Date(post.scheduled_at);
+    const dueAt = new Date(Math.max(scheduledAt.getTime(), Date.now() + MIN_LEAD_MS));
+
     try {
-      const text = post.edited_text ?? post.draft_text;
-      const scheduledAt = new Date(post.scheduled_at);
-      const dueAt = new Date(Math.max(scheduledAt.getTime(), Date.now() + MIN_LEAD_MS));
       const externalId = await schedulePostViaBuffer({
         apiKey: env.BUFFER_API_KEY,
         channelId: env.BUFFER_CHANNEL_ID,
@@ -77,9 +79,35 @@ export async function runPublishGateJob(env: Env, todayEt: string): Promise<stri
       await postAlert(env.SLACK_BOT_TOKEN, env.SLACK_CHANNEL_ID, `⚠️ Post #${post.id} failed to publish to Buffer: ${reason}`, post.slack_message_ts);
       failed++;
     }
+
+    // Cross-post the same approved text to Facebook. Independent of the
+    // LinkedIn outcome above — a Buffer/LinkedIn hiccup shouldn't also block
+    // Facebook, and vice versa. Idempotent: skips a post already marked
+    // facebook_status = 'posted' (relevant on a manual /run-publish-gate retry).
+    if (post.facebook_status !== "posted") {
+      try {
+        const fbExternalId = await schedulePostViaBuffer({
+          apiKey: env.BUFFER_API_KEY,
+          channelId: env.BUFFER_FACEBOOK_CHANNEL_ID,
+          text,
+          imageUrl: post.image_url ?? undefined,
+          dueAt,
+        });
+        await env.DB
+          .prepare("UPDATE linkedin_posts SET facebook_status = 'posted', facebook_posted_at = datetime('now'), facebook_external_post_id = ? WHERE id = ?")
+          .bind(fbExternalId, post.id)
+          .run();
+        fbPosted++;
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : String(err);
+        await env.DB.prepare("UPDATE linkedin_posts SET facebook_status = 'failed', facebook_failure_reason = ? WHERE id = ?").bind(reason, post.id).run();
+        await postAlert(env.SLACK_BOT_TOKEN, env.SLACK_CHANNEL_ID, `⚠️ Post #${post.id} failed to cross-post to Facebook: ${reason}`, post.slack_message_ts);
+        fbFailed++;
+      }
+    }
   }
 
-  const summary = `Pulled ${pulled}, posted ${posted}, failed ${failed}, held ${held} (of ${results.length} pending_review posts).`;
+  const summary = `Pulled ${pulled}, posted ${posted}, failed ${failed}, held ${held} (of ${results.length} pending_review posts). Facebook: posted ${fbPosted}, failed ${fbFailed}.`;
   return `${summary}${stranded}`;
 }
 

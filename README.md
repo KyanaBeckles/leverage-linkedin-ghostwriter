@@ -68,7 +68,8 @@ wrangler secret put ANTHROPIC_API_KEY
 wrangler secret put SLACK_BOT_TOKEN
 wrangler secret put SLACK_CHANNEL_ID
 wrangler secret put BUFFER_API_KEY
-wrangler secret put BUFFER_CHANNEL_ID
+wrangler secret put BUFFER_CHANNEL_ID            # LinkedIn personal-profile channel
+wrangler secret put BUFFER_FACEBOOK_CHANNEL_ID   # Facebook Page channel — same text cross-posted here
 wrangler secret put CLOUDINARY_CLOUD_NAME
 wrangler secret put CLOUDINARY_API_KEY
 wrangler secret put CLOUDINARY_API_SECRET

@@ -110,6 +110,9 @@ export default {
     // (e.g. after fixing a credential that caused a real publish failure).
     // Safe to re-call: only acts on rows still in 'pending_review'.
     if (url.pathname === "/run-publish-gate" && req.method === "POST") {
+      if (!isAuthorized(req, env)) {
+        return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
+      }
       const dateStr = url.searchParams.get("date") ?? getEasternParts().dateStr;
       const detail = await runPublishGateJob(env, dateStr);
       return Response.json({ ok: true, dateStr, detail });
