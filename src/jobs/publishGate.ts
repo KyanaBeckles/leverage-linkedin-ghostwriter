@@ -7,6 +7,7 @@ interface PendingPost {
   draft_text: string;
   edited_text: string | null;
   image_url: string | null;
+  is_text_card: number;
   scheduled_at: string;
   facebook_status: string | null;
 }
@@ -21,7 +22,7 @@ const MIN_LEAD_MS = 5 * 60_000;
 // silently failing on a missing OAuth scope, holding real posts indefinitely).
 export async function runPublishGateJob(env: Env, todayEt: string): Promise<string> {
   const { results } = await env.DB
-    .prepare("SELECT id, draft_text, edited_text, image_url, scheduled_at, facebook_status FROM linkedin_posts WHERE status = 'scheduled' AND date(scheduled_at) = ?")
+    .prepare("SELECT id, draft_text, edited_text, image_url, is_text_card, scheduled_at, facebook_status FROM linkedin_posts WHERE status = 'scheduled' AND date(scheduled_at) = ?")
     .bind(todayEt)
     .all<PendingPost>();
 
@@ -30,10 +31,11 @@ export async function runPublishGateJob(env: Env, todayEt: string): Promise<stri
   let posted = 0, failed = 0, fbPosted = 0, fbFailed = 0;
 
   for (const post of results) {
-    // When a text-card image exists, the card IS the post - an accompanying
-    // caption would just duplicate what's already rendered on the image.
-    // Buffer accepts an empty text when an asset is attached.
-    const text = post.image_url ? "" : (post.edited_text ?? post.draft_text);
+    // Only a generated text-card duplicates the caption (the card IS the
+    // post) - a real photo attached to a post is separate content and the
+    // caption must still be sent, or the post goes out with no message at
+    // all. Buffer accepts an empty text when an asset is attached.
+    const text = post.is_text_card ? "" : (post.edited_text ?? post.draft_text);
     const scheduledAt = new Date(post.scheduled_at);
     const dueAt = new Date(Math.max(scheduledAt.getTime(), Date.now() + MIN_LEAD_MS));
 

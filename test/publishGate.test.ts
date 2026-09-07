@@ -19,6 +19,7 @@ const SCHEDULED_POST = {
   draft_text: "the draft",
   edited_text: null,
   image_url: null,
+  is_text_card: 0,
   scheduled_at: "2026-07-13T19:00:00.000Z",
   facebook_status: null,
 };
@@ -131,12 +132,20 @@ describe("runPublishGateJob", () => {
   });
 
   it("sends an empty caption when a text-card image exists, so the card isn't duplicated as text", async () => {
-    const { env } = envWith([{ ...SCHEDULED_POST, image_url: "https://res.cloudinary.com/demo/card.png" }]);
+    const { env } = envWith([{ ...SCHEDULED_POST, image_url: "https://res.cloudinary.com/demo/card.png", is_text_card: 1 }]);
 
     await runPublishGateJob(env, "2026-07-13");
 
     expect(bufferMock.mock.calls[0][0]).toMatchObject({ text: "", imageUrl: "https://res.cloudinary.com/demo/card.png" });
     expect(bufferMock.mock.calls[1][0]).toMatchObject({ text: "", imageUrl: "https://res.cloudinary.com/demo/card.png" });
+  });
+
+  it("still sends the real caption when a photo is attached (not a text-card)", async () => {
+    const { env } = envWith([{ ...SCHEDULED_POST, image_url: "https://res.cloudinary.com/demo/photo.jpg", is_text_card: 0 }]);
+
+    await runPublishGateJob(env, "2026-07-13");
+
+    expect(bufferMock.mock.calls[0][0]).toMatchObject({ text: "the draft", imageUrl: "https://res.cloudinary.com/demo/photo.jpg" });
   });
 
   it("skips a post already cross-posted to Facebook, on a manual retry", async () => {
