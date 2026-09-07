@@ -3,14 +3,12 @@ import worker, { dispatch } from "../src/index";
 import type { Env } from "../src/env";
 import { createFakeD1, type FakeRoute } from "./helpers/fakeD1";
 
-const { generateMock, reviewMock, publishGateMock } = vi.hoisted(() => ({
+const { generateMock, publishGateMock } = vi.hoisted(() => ({
   generateMock: vi.fn(async () => "generated"),
-  reviewMock: vi.fn(async () => "reviewed"),
   publishGateMock: vi.fn(async () => "gated"),
 }));
 
 vi.mock("../src/jobs/generate", () => ({ runGenerateJob: generateMock }));
-vi.mock("../src/jobs/review", () => ({ runReviewJob: reviewMock }));
 vi.mock("../src/jobs/publishGate", () => ({ runPublishGateJob: publishGateMock }));
 
 const NO_PRIOR_RUN: FakeRoute[] = [
@@ -36,13 +34,12 @@ describe("dispatch", () => {
   it("runs generate in the Sunday evening window only", async () => {
     const { env } = envWith(NO_PRIOR_RUN);
     expect(await dispatch(env, SUNDAY_1805_ET)).toEqual(["generate: ran — generated"]);
-    expect(reviewMock).not.toHaveBeenCalled();
     expect(publishGateMock).not.toHaveBeenCalled();
   });
 
-  it("runs review in the MWF morning window and the gate in the afternoon window", async () => {
+  it("runs the publish gate in the MWF afternoon window, and nothing in the morning (no review step)", async () => {
     const { env } = envWith(NO_PRIOR_RUN);
-    expect(await dispatch(env, MONDAY_0805_ET)).toEqual(["review: ran — reviewed"]);
+    expect(await dispatch(env, MONDAY_0805_ET)).toEqual([]);
     expect(await dispatch(env, MONDAY_1435_ET)).toEqual(["publish_gate: ran — gated"]);
     expect(generateMock).not.toHaveBeenCalled();
   });
@@ -50,7 +47,7 @@ describe("dispatch", () => {
   it("does nothing on a non-posting day", async () => {
     const { env } = envWith(NO_PRIOR_RUN);
     expect(await dispatch(env, TUESDAY_0805_ET)).toEqual([]);
-    expect(reviewMock).not.toHaveBeenCalled();
+    expect(publishGateMock).not.toHaveBeenCalled();
   });
 
   it("still fires a first attempt late in the window, keyed to the ET date", async () => {
@@ -66,28 +63,28 @@ describe("dispatch", () => {
       { match: /SELECT status, started_at FROM job_runs/, rows: [{ status: "ok", started_at: "2026-07-13 12:00:00" }] },
       ...NO_PRIOR_RUN.slice(1),
     ]);
-    expect(await dispatch(env, MONDAY_0805_ET)).toEqual([]);
-    expect(reviewMock).not.toHaveBeenCalled();
+    expect(await dispatch(env, MONDAY_1435_ET)).toEqual([]);
+    expect(publishGateMock).not.toHaveBeenCalled();
   });
 
   it("retries a job that errored earlier, without a second job_runs INSERT", async () => {
     const { env, fake } = envWith([
-      { match: /SELECT status, started_at FROM job_runs/, rows: [{ status: "error", started_at: "2026-07-13 12:00:00" }] },
+      { match: /SELECT status, started_at FROM job_runs/, rows: [{ status: "error", started_at: "2026-07-13 18:30:00" }] },
       ...NO_PRIOR_RUN.slice(1),
     ]);
-    // 09:45 ET — well past the 15-minute window, still inside the 2h retry window.
-    expect(await dispatch(env, new Date("2026-07-13T13:45:00Z"))).toEqual(["review: retried — reviewed"]);
+    // 16:15 ET — well past the 15-minute window, still inside the 2h retry window.
+    expect(await dispatch(env, new Date("2026-07-13T20:15:00Z"))).toEqual(["publish_gate: retried — gated"]);
     expect(fake.matching(/INSERT INTO job_runs/)).toHaveLength(0);
     expect(fake.matching(/UPDATE job_runs SET status = 'running'/)).toHaveLength(1);
   });
 
   it("stops retrying once the retry window closes", async () => {
     const { env } = envWith([
-      { match: /SELECT status, started_at FROM job_runs/, rows: [{ status: "error", started_at: "2026-07-13 12:00:00" }] },
+      { match: /SELECT status, started_at FROM job_runs/, rows: [{ status: "error", started_at: "2026-07-13 18:30:00" }] },
       ...NO_PRIOR_RUN.slice(1),
     ]);
-    // 10:05 ET, 2h05m after the 08:00 target.
-    expect(await dispatch(env, new Date("2026-07-13T14:05:00Z"))).toEqual([]);
+    // 16:35 ET, 2h05m after the 14:30 target.
+    expect(await dispatch(env, new Date("2026-07-13T20:35:00Z"))).toEqual([]);
   });
 
   it("records a job failure and keeps going instead of throwing", async () => {
@@ -109,7 +106,6 @@ describe("POST /run", () => {
     const res = await run(env);
     expect(res.status).toBe(401);
     expect(generateMock).not.toHaveBeenCalled();
-    expect(reviewMock).not.toHaveBeenCalled();
     expect(publishGateMock).not.toHaveBeenCalled();
   });
 
@@ -136,5 +132,25 @@ describe("POST /run", () => {
     const res = await worker.fetch(new Request("https://worker.example/health"), env);
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ ok: true, et: { weekday: expect.any(String) } });
+  });
+});
+
+describe("POST /run-publish-gate", () => {
+  const runPublishGate = (env: Env, headers: HeadersInit = {}, dateParam = "") =>
+    worker.fetch(new Request(`https://worker.example/run-publish-gate${dateParam}`, { method: "POST", headers }), env);
+
+  it("rejects a request with no bearer token", async () => {
+    const { env } = envWith(NO_PRIOR_RUN);
+    const res = await runPublishGate(env);
+    expect(res.status).toBe(401);
+    expect(publishGateMock).not.toHaveBeenCalled();
+  });
+
+  it("runs the publish gate directly, bypassing the ET-window/job_runs guard", async () => {
+    const { env } = envWith(NO_PRIOR_RUN);
+    const res = await runPublishGate(env, { Authorization: "Bearer s3cret" }, "?date=2026-08-28");
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, dateStr: "2026-08-28", detail: "gated" });
+    expect(publishGateMock).toHaveBeenCalledWith(env, "2026-08-28");
   });
 });

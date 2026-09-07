@@ -2,7 +2,6 @@ import type { Env } from "./env";
 import { getEasternParts, isInWindow, type EasternParts } from "./lib/easternTime";
 import { getJobRunState, withJobRunTracking, RETRY_WINDOW_MINUTES, type JobName } from "./lib/jobRuns";
 import { runGenerateJob } from "./jobs/generate";
-import { runReviewJob } from "./jobs/review";
 import { runPublishGateJob } from "./jobs/publishGate";
 
 const WEEKDAYS_MWF = new Set(["Mon", "Wed", "Fri"]);
@@ -15,11 +14,11 @@ interface JobSchedule {
   run: (env: Env, todayEt: string) => Promise<string>;
 }
 
+// No review/veto step (removed 2026-09-04 at Kyana's request) - generate
+// drafts, then publish them directly at their scheduled time.
 const SCHEDULE: JobSchedule[] = [
   // Weekly generation — Sunday ~18:00 ET, preps the coming Mon/Wed/Fri.
   { name: "generate", weekdays: new Set(["Sun"]), hour: 18, minute: 0, run: runGenerateJob },
-  // Morning-of Slack review ping — ~08:00 ET.
-  { name: "review", weekdays: WEEKDAYS_MWF, hour: 8, minute: 0, run: runReviewJob },
   // Publish gate — ~14:30 ET, 30 min before the 3:00 PM post slot.
   { name: "publish_gate", weekdays: WEEKDAYS_MWF, hour: 14, minute: 30, run: runPublishGateJob },
 ];
@@ -108,7 +107,7 @@ export default {
     // Unconditional publish-gate run, bypassing the ET-window/job_runs guard
     // that /run has — for manually retrying a specific day's posts on demand
     // (e.g. after fixing a credential that caused a real publish failure).
-    // Safe to re-call: only acts on rows still in 'pending_review'.
+    // Safe to re-call: only acts on rows still in 'scheduled'.
     if (url.pathname === "/run-publish-gate" && req.method === "POST") {
       if (!isAuthorized(req, env)) {
         return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
