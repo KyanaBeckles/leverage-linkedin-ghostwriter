@@ -19,6 +19,7 @@ const VOICE = {
   tone: "warm",
   sentence_rhythm: "punchy",
   structural_patterns: JSON.stringify(["opener"]),
+  recurring_topics: JSON.stringify(["topic A", "topic B"]),
   signature_phrases: JSON.stringify(["let's dig in"]),
   avoid_list: JSON.stringify(["hustle"]),
   example_excerpts: JSON.stringify(["one", "two", "three", "four"]),

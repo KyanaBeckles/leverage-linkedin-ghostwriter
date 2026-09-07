@@ -5,16 +5,15 @@ a standalone Cloudflare Worker so its cron schedule doesn't depend on Manus.
 
 Ported from the spec in the Drive folder (`ghostwriter-agent-spec.md`,
 `orchestrator-strategy-guidance.md`, `build-checklist.md`, `voice-profile-v3.json`,
-`post-topics-seed-v3.json`) — same pipeline, same voice profile, same 3-job
-Slack-veto safety net, adapted from Postgres/Drizzle + Manus AGENT cron to
-D1/SQLite + Cloudflare Cron Triggers.
+`post-topics-seed-v3.json`) — same pipeline, same voice profile, adapted from
+Postgres/Drizzle + Manus AGENT cron to D1/SQLite + Cloudflare Cron Triggers.
 
 ## How it works
 
 One Worker, one cron trigger (`*/15 * * * *`, every 15 minutes, all week). The
 `scheduled` handler checks the real America/New_York wall-clock time on every
 firing and only actually does something when it's the right moment for one of
-three jobs — this sidesteps Cloudflare Cron Triggers being UTC-only with no
+two jobs — this sidesteps Cloudflare Cron Triggers being UTC-only with no
 DST awareness, and a `job_runs` table stops a job firing twice inside its
 15-minute window.
 
@@ -22,18 +21,21 @@ A job that fails is retried on later cron firings for up to 2 hours after its
 target time; only a run recorded as `ok` blocks further attempts, and a `running`
 row left behind by a Worker that died mid-job is reclaimed after 15 minutes.
 Every job is failure-isolating: one topic that Claude can't draft, or one post
-Slack won't accept, doesn't take the rest of the batch down with it, and
-anything that gets stuck posts an alert into `#digital-marketing`.
+Buffer won't accept, doesn't take the rest of the batch down with it, and
+anything that fails posts an alert into `#digital-marketing`.
 
-The publish gate fails closed: if the veto reaction can't be read from Slack
-(after retries), the post is held in `pending_review` and flagged rather than
-published.
+There is no review/approval step — `publish_gate` publishes every post
+scheduled for today directly, no human check window. (A Slack veto-reaction
+step existed here originally; removed 2026-09-04 because the reaction-read
+call kept silently failing on a missing OAuth scope, holding real approved
+posts indefinitely with nothing to catch it. If this needs to come back,
+build it as a fully separate check the Worker doesn't depend on to publish
+at all.)
 
 | Job | When (ET) | What |
 |---|---|---|
 | `generate` | Sunday ~18:00 | Picks 3 topics, drafts them in Kyana's voice via Claude, schedules for the coming Mon/Wed/Fri 3:00 PM |
-| `review` | Mon/Wed/Fri ~08:00 | Posts each day's draft to `#digital-marketing` for silent-approval review |
-| `publish_gate` | Mon/Wed/Fri ~14:30 | Checks for a 🚫 veto reaction; pushes everything else to Buffer for the 3:00 PM publish |
+| `publish_gate` | Mon/Wed/Fri ~14:30 | Publishes every post scheduled for today to Buffer (LinkedIn + Facebook) for the 3:00 PM slot |
 
 ## Setup
 
@@ -41,7 +43,7 @@ published.
 
 - **Buffer**: connect the LinkedIn personal profile, upgrade to Essentials ($5/mo), grab the API key + channel ID from Settings.
 - **Cloudinary**: free tier, grab cloud name / API key / API secret.
-- **Slack**: create a bot with `chat:write` + `reactions:read` scopes, invite it into `#digital-marketing` (channel ID: search Slack for the channel, or `slack_search_channels`).
+- **Slack**: create a bot with `chat:write` scope (failure alerts only, no review step), invite it into `#digital-marketing` (channel ID: search Slack for the channel, or `slack_search_channels`).
 - **Anthropic**: an API key for Claude.
 
 ### 2. D1 database
@@ -110,9 +112,9 @@ npm test        # vitest
 ```
 
 The tests cover the ET/DST scheduling math, the dispatch + retry state machine,
-`POST /run` auth, and the failure paths of all three jobs against a fake D1
-(`test/helpers/fakeD1.ts`) — no network or Cloudflare account needed. CI runs
-both commands on every PR.
+`POST /run`/`POST /run-publish-gate` auth, and the failure paths of both jobs
+against a fake D1 (`test/helpers/fakeD1.ts`) — no network or Cloudflare account
+needed. CI runs both commands on every PR.
 
 ## Known gaps (v1)
 

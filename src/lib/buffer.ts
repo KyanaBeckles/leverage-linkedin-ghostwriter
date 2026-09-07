@@ -14,6 +14,10 @@
 //    required type \"SchedulingType!\" was not provided" until this was added.
 //    Same beta-instability risk as #3 — re-verify against
 //    developers.buffer.com/examples/create-scheduled-post.html if this breaks again.
+// 5. Facebook channels require metadata.facebook.type (PostTypeFacebook enum:
+//    post/story/reel) - real cross-posts failed 2026-09-04 with "Facebook
+//    posts require a type" until this was added. LinkedIn doesn't need it;
+//    only set for a Facebook channelId.
 
 const BUFFER_GRAPHQL_ENDPOINT = "https://api.buffer.com";
 
@@ -44,6 +48,8 @@ export interface SchedulePostArgs {
   text: string;
   imageUrl?: string;
   dueAt: Date;
+  /** Required by Buffer for Facebook channels only; omit for LinkedIn. */
+  facebookPostType?: "post" | "story" | "reel";
 }
 
 export async function schedulePostViaBuffer(args: SchedulePostArgs): Promise<string> {
@@ -80,6 +86,7 @@ export async function schedulePostViaBuffer(args: SchedulePostArgs): Promise<str
         schedulingType: "automatic",
         mode: "customScheduled",
         dueAt: args.dueAt.toISOString(),
+        ...(args.facebookPostType ? { metadata: { facebook: { type: args.facebookPostType } } } : {}),
       },
     }
   );

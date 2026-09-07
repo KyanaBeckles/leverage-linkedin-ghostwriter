@@ -20,6 +20,7 @@ interface VoiceProfile {
   tone: string;
   sentence_rhythm: string;
   structural_patterns: string;
+  recurring_topics: string;
   signature_phrases: string;
   avoid_list: string | null;
   example_excerpts: string;
@@ -31,7 +32,11 @@ const MODE_PROMPTS: Record<Topic["mode"], string> = {
   aphorism:
     "Write in APHORISM mode: 2-4 lines, analogy-driven if it fits, ending on a standalone punchline or rhetorical question. Stylistic compression, not content dumbing-down.",
   curated_series:
-    "Write in CURATED-SERIES mode: a numbered claim-or-question plus source context plus an invitation to respond. Compact — one idea, one link/source, one question.",
+    // No sequential number (e.g. "#12 in the series...") - removed 2026-09-07:
+    // nothing tracks a real running count, so every generated number was
+    // fabricated and inconsistent post to post, undermining the exact
+    // authenticity a real numbered series is supposed to signal.
+    "Write in CURATED-SERIES mode: a claim-or-question plus source context plus an invitation to respond. Compact — one idea, one link/source, one question. Do not invent a sequential number for this post (e.g. \"#12 in the series\") - lead straight into the claim or question.",
 };
 
 // v1 topic selection: simplified balancing (full rolling-4-week analysis
@@ -67,6 +72,7 @@ async function pickTopics(db: D1Database): Promise<Topic[]> {
 
 async function draftPost(env: Env, voice: VoiceProfile, topic: Topic): Promise<{ text: string; tokensUsed: string; prompt: string }> {
   const structuralPatterns = JSON.parse(voice.structural_patterns) as string[];
+  const recurringTopics = JSON.parse(voice.recurring_topics) as string[];
   const signaturePhrases = JSON.parse(voice.signature_phrases) as string[];
   const avoidList = voice.avoid_list ? (JSON.parse(voice.avoid_list) as string[]) : [];
   const examples = JSON.parse(voice.example_excerpts) as string[];
@@ -78,6 +84,7 @@ async function draftPost(env: Env, voice: VoiceProfile, topic: Topic): Promise<{
 TONE: ${voice.tone}
 SENTENCE RHYTHM: ${voice.sentence_rhythm}
 STRUCTURAL PATTERNS she uses: ${structuralPatterns.join("; ")}
+RECURRING TOPICS & STANCES — when the topic touches one of these, hold this exact position, don't drift from it: ${recurringTopics.join("; ")}
 SIGNATURE PHRASES (use naturally, don't force all of them): ${signaturePhrases.join(", ")}
 AVOID: ${avoidList.join(" | ")}
 

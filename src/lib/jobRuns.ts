@@ -4,11 +4,11 @@
 // transient error (Claude 529, Slack timeout) get another shot instead of
 // silently skipping the day.
 
+// "review" is a retired job name (Slack veto step, removed 2026-09-04) - kept
+// in the type/CHECK constraint since old job_runs history still references it.
 export type JobName = "generate" | "review" | "publish_gate";
 
 // How long after its target time a job may still be retried after a failure.
-// Long enough to ride out an upstream outage, short enough that `review` can't
-// fire so late it collides with the 14:30 publish gate.
 export const RETRY_WINDOW_MINUTES = 120;
 
 // A run left in 'running' this long is assumed dead (Worker evicted, CPU limit
