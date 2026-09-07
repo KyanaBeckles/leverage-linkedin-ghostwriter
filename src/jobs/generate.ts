@@ -31,7 +31,11 @@ const MODE_PROMPTS: Record<Topic["mode"], string> = {
   aphorism:
     "Write in APHORISM mode: 2-4 lines, analogy-driven if it fits, ending on a standalone punchline or rhetorical question. Stylistic compression, not content dumbing-down.",
   curated_series:
-    "Write in CURATED-SERIES mode: a numbered claim-or-question plus source context plus an invitation to respond. Compact — one idea, one link/source, one question.",
+    // No sequential number (e.g. "#12 in the series...") - removed 2026-09-07:
+    // nothing tracks a real running count, so every generated number was
+    // fabricated and inconsistent post to post, undermining the exact
+    // authenticity a real numbered series is supposed to signal.
+    "Write in CURATED-SERIES mode: a claim-or-question plus source context plus an invitation to respond. Compact — one idea, one link/source, one question. Do not invent a sequential number for this post (e.g. \"#12 in the series\") - lead straight into the claim or question.",
 };
 
 // v1 topic selection: simplified balancing (full rolling-4-week analysis
