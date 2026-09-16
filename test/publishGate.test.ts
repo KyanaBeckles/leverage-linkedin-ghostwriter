@@ -18,7 +18,10 @@ const SCHEDULED_POST = {
   id: 42,
   draft_text: "the draft",
   edited_text: null,
-  image_url: null,
+  // A real photo by default — text-only posts are blocked from publishing
+  // (see the dedicated test below), so every fixture here needs an image or
+  // is_text_card unless it's specifically testing that block.
+  image_url: "https://res.cloudinary.com/demo/photo.jpg",
   is_text_card: 0,
   scheduled_at: "2026-07-13T19:00:00.000Z",
   facebook_status: null,
@@ -146,6 +149,20 @@ describe("runPublishGateJob", () => {
     await runPublishGateJob(env, "2026-07-13");
 
     expect(bufferMock.mock.calls[0][0]).toMatchObject({ text: "the draft", imageUrl: "https://res.cloudinary.com/demo/photo.jpg" });
+  });
+
+  it("blocks a text-only post from publishing and alerts instead", async () => {
+    const { env, fake } = envWith([{ ...SCHEDULED_POST, image_url: null, is_text_card: 0 }]);
+
+    const detail = await runPublishGateJob(env, "2026-07-13");
+
+    expect(bufferMock).not.toHaveBeenCalled();
+    expect(fake.matching(/status = 'failed'/)[0].params).toEqual([
+      "No image or text-card attached — text-only posts are blocked from publishing.",
+      42,
+    ]);
+    expect(postAlertMock.mock.calls[0][2]).toContain("no image or text-card attached");
+    expect(detail).toContain("failed 1");
   });
 
   it("skips a post already cross-posted to Facebook, on a manual retry", async () => {

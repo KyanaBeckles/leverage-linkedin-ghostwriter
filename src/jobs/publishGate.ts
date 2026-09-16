@@ -39,6 +39,24 @@ export async function runPublishGateJob(env: Env, todayEt: string): Promise<stri
     const scheduledAt = new Date(post.scheduled_at);
     const dueAt = new Date(Math.max(scheduledAt.getTime(), Date.now() + MIN_LEAD_MS));
 
+    // Kyana's explicit call (2026-09-16): a plain-text post never ships. It
+    // gets buried by LinkedIn's algorithm (rarely breaks 100 impressions) and
+    // there's still no automated step that attaches a photo or text-card, so
+    // this was silently happening most weeks. Block rather than ship bare.
+    if (!post.image_url && !post.is_text_card) {
+      await env.DB
+        .prepare("UPDATE linkedin_posts SET status = 'failed', failure_reason = ? WHERE id = ?")
+        .bind("No image or text-card attached — text-only posts are blocked from publishing.", post.id)
+        .run();
+      await postAlert(
+        env.SLACK_BOT_TOKEN,
+        env.SLACK_CHANNEL_ID,
+        `⚠️ Post #${post.id} held: no image or text-card attached. Attach one and retry via /run-publish-gate — text-only posts are blocked from publishing.`
+      );
+      failed++;
+      continue;
+    }
+
     try {
       const externalId = await schedulePostViaBuffer({
         apiKey: env.BUFFER_API_KEY,
