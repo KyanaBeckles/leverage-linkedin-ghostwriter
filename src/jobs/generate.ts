@@ -6,6 +6,11 @@ import { postAlert } from "../lib/slack";
 const POSTS_PER_WEEK = 3;
 const LINKEDIN_MAX_CHARS = 3000;
 
+// Kyana's explicit call (2026-09-16): these two words must never appear in a
+// post, body or hashtag, no exceptions. Lowercase — matched against lowercased
+// draft text as a plain substring check, see draftPost.
+const BANNED_WORDS = ["accountability", "reform"];
+
 interface Topic {
   id: number;
   topic: string;
@@ -109,6 +114,17 @@ Output ONLY the post text, no preamble, no markdown formatting, no quotation mar
   if (!text.trim()) throw new Error("Claude returned an empty draft");
   if (text.length > LINKEDIN_MAX_CHARS) {
     throw new Error(`Draft is ${text.length} chars, over LinkedIn's ${LINKEDIN_MAX_CHARS}-char limit`);
+  }
+
+  // Hard ban, not just a prompt instruction — Kyana's explicit call. Checked
+  // here rather than trusted to the system prompt's AVOID list alone, since a
+  // model can still slip a banned word in despite being told not to. Plain
+  // substring match, not \b-bounded: banned words show up concatenated inside
+  // hashtags too (e.g. "#PoliceReform"), where a word-boundary regex misses them.
+  const lower = text.toLowerCase();
+  const banned = BANNED_WORDS.filter((w) => lower.includes(w));
+  if (banned.length > 0) {
+    throw new Error(`Draft contains banned word(s): ${banned.join(", ")}`);
   }
 
   return { text: text.trim(), tokensUsed: String(tokensUsed), prompt: `${system}\n\n---\n\n${user}` };

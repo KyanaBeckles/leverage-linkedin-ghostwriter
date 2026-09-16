@@ -117,6 +117,26 @@ describe("runGenerateJob", () => {
     expect(detail).toContain("over LinkedIn's 3000-char limit");
   });
 
+  it("rejects a draft using a banned word in the body", async () => {
+    claudeMock.mockResolvedValue({ text: "Accountability matters here.", tokensUsed: 1 });
+    const { env, fake } = envWith([topic(1)]);
+
+    const detail = await runGenerateJob(env, "2026-07-12");
+
+    expect(fake.matching(/INSERT INTO linkedin_posts/)).toHaveLength(0);
+    expect(detail).toContain("banned word(s): accountability");
+  });
+
+  it("rejects a draft using a banned word inside a hashtag", async () => {
+    claudeMock.mockResolvedValue({ text: "A good post. #PoliceReform", tokensUsed: 1 });
+    const { env, fake } = envWith([topic(1)]);
+
+    const detail = await runGenerateJob(env, "2026-07-12");
+
+    expect(fake.matching(/INSERT INTO linkedin_posts/)).toHaveLength(0);
+    expect(detail).toContain("banned word(s): reform");
+  });
+
   it("alerts Slack instead of silently posting nothing when the queue is empty", async () => {
     const { env } = envWith([]);
 
