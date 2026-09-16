@@ -137,6 +137,16 @@ describe("runGenerateJob", () => {
     expect(detail).toContain("banned word(s): reform");
   });
 
+  it("rejects a draft using the banned #BlacksInIO hashtag", async () => {
+    claudeMock.mockResolvedValue({ text: "A good post. #IOPsychology #BlacksInIO", tokensUsed: 1 });
+    const { env, fake } = envWith([topic(1)]);
+
+    const detail = await runGenerateJob(env, "2026-07-12");
+
+    expect(fake.matching(/INSERT INTO linkedin_posts/)).toHaveLength(0);
+    expect(detail).toContain("banned word(s): blacksinio");
+  });
+
   it("alerts Slack instead of silently posting nothing when the queue is empty", async () => {
     const { env } = envWith([]);
 

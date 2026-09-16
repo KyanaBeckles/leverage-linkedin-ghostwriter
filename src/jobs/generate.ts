@@ -6,10 +6,10 @@ import { postAlert } from "../lib/slack";
 const POSTS_PER_WEEK = 3;
 const LINKEDIN_MAX_CHARS = 3000;
 
-// Kyana's explicit call (2026-09-16): these two words must never appear in a
-// post, body or hashtag, no exceptions. Lowercase — matched against lowercased
-// draft text as a plain substring check, see draftPost.
-const BANNED_WORDS = ["accountability", "reform"];
+// Kyana's explicit call (2026-09-16): these must never appear in a post, body
+// or hashtag, no exceptions. Lowercase — matched against lowercased draft
+// text as a plain substring check, see draftPost.
+const BANNED_WORDS = ["accountability", "reform", "blacksinio"];
 
 interface Topic {
   id: number;
